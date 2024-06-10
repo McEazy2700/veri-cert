@@ -1,0 +1,260 @@
+#pragma version 10
+
+smart_contracts.cert.contract.Cert.approval_program:
+    // smart_contracts/cert/contract.py:18
+    // class Cert(ARC4Contract):
+    txn NumAppArgs
+    bz main_bare_routing@8
+    method "hello(string)string"
+    method "create_certificate_nft((string,string,uint64,string,string))uint64"
+    method "update()bool"
+    method "delete()bool"
+    txna ApplicationArgs 0
+    match main_hello_route@2 main_create_certificate_nft_route@3 main_update_route@4 main_delete_route@5
+    err // reject transaction
+
+main_hello_route@2:
+    // smart_contracts/cert/contract.py:19
+    // @arc4.abimethod()
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    // smart_contracts/cert/contract.py:18
+    // class Cert(ARC4Contract):
+    txna ApplicationArgs 1
+    // smart_contracts/cert/contract.py:19
+    // @arc4.abimethod()
+    callsub hello
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_create_certificate_nft_route@3:
+    // smart_contracts/cert/contract.py:23
+    // @arc4.abimethod()
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    // smart_contracts/cert/contract.py:18
+    // class Cert(ARC4Contract):
+    txna ApplicationArgs 1
+    // smart_contracts/cert/contract.py:23
+    // @arc4.abimethod()
+    callsub create_certificate_nft
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_update_route@4:
+    // smart_contracts/cert/contract.py:44
+    // @arc4.abimethod(allow_actions=["UpdateApplication"])
+    txn OnCompletion
+    int UpdateApplication
+    ==
+    assert // OnCompletion is UpdateApplication
+    txn ApplicationID
+    assert // is not creating
+    callsub update
+    byte 0x00
+    int 0
+    uncover 2
+    setbit
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_delete_route@5:
+    // smart_contracts/cert/contract.py:48
+    // @arc4.abimethod(allow_actions=["DeleteApplication"])
+    txn OnCompletion
+    int DeleteApplication
+    ==
+    assert // OnCompletion is DeleteApplication
+    txn ApplicationID
+    assert // is not creating
+    callsub delete
+    byte 0x00
+    int 0
+    uncover 2
+    setbit
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_bare_routing@8:
+    // smart_contracts/cert/contract.py:18
+    // class Cert(ARC4Contract):
+    txn OnCompletion
+    !
+    assert // reject transaction
+    txn ApplicationID
+    !
+    assert // is creating
+    int 1
+    return
+
+
+// smart_contracts.cert.contract.Cert.hello(name: bytes) -> bytes:
+hello:
+    // smart_contracts/cert/contract.py:19-20
+    // @arc4.abimethod()
+    // def hello(self, name: arc4.String) -> arc4.String:
+    proto 1 1
+    // smart_contracts/cert/contract.py:21
+    // return "Hello, " + name
+    frame_dig -1
+    extract 2 0
+    byte "Hello, "
+    swap
+    concat
+    dup
+    len
+    itob
+    extract 6 0
+    swap
+    concat
+    retsub
+
+
+// smart_contracts.cert.contract.Cert.create_certificate_nft(args: bytes) -> bytes:
+create_certificate_nft:
+    // smart_contracts/cert/contract.py:23-27
+    // @arc4.abimethod()
+    // def create_certificate_nft(
+    //     self,
+    //     args: NewCertificateNftArgs,
+    // ) -> arc4.UInt64:
+    proto 1 1
+    // smart_contracts/cert/contract.py:29
+    // asset_name=args.name.native,
+    frame_dig -1
+    int 0
+    extract_uint16
+    frame_dig -1
+    dig 1
+    extract_uint16
+    int 2
+    +
+    frame_dig -1
+    cover 2
+    extract3
+    extract 2 0
+    // smart_contracts/cert/contract.py:31
+    // unit_name=args.unit_name.native,
+    frame_dig -1
+    int 14
+    extract_uint16
+    frame_dig -1
+    dig 1
+    extract_uint16
+    int 2
+    +
+    frame_dig -1
+    cover 2
+    extract3
+    extract 2 0
+    // smart_contracts/cert/contract.py:32
+    // url=args.image_url.native,
+    frame_dig -1
+    int 2
+    extract_uint16
+    frame_dig -1
+    dig 1
+    extract_uint16
+    int 2
+    +
+    frame_dig -1
+    cover 2
+    extract3
+    extract 2 0
+    // smart_contracts/cert/contract.py:33
+    // manager=Global.current_application_address,
+    global CurrentApplicationAddress
+    // smart_contracts/cert/contract.py:34-36
+    // freeze=Global.current_application_address,
+    // clawback=Global.current_application_address,
+    // reserve=Global.current_application_address,
+    dupn 3
+    // smart_contracts/cert/contract.py:37
+    // metadata_hash=args.metadata_hash.native.bytes,
+    frame_dig -1
+    int 12
+    extract_uint16
+    frame_dig -1
+    dig 1
+    extract_uint16
+    int 2
+    +
+    frame_dig -1
+    cover 2
+    extract3
+    extract 2 0
+    // smart_contracts/cert/contract.py:39
+    // txn.submit()
+    itxn_begin
+    itxn_field ConfigAssetMetadataHash
+    itxn_field ConfigAssetReserve
+    itxn_field ConfigAssetClawback
+    itxn_field ConfigAssetFreeze
+    itxn_field ConfigAssetManager
+    itxn_field ConfigAssetURL
+    itxn_field ConfigAssetUnitName
+    itxn_field ConfigAssetName
+    // smart_contracts/cert/contract.py:28
+    // txn = itxn.AssetConfig(
+    int acfg
+    itxn_field TypeEnum
+    // smart_contracts/cert/contract.py:30
+    // fee=1000,
+    int 1000
+    itxn_field Fee
+    // smart_contracts/cert/contract.py:39
+    // txn.submit()
+    itxn_submit
+    // smart_contracts/cert/contract.py:40
+    // asset = op.ITxn.created_asset_id()
+    itxn CreatedAssetID
+    // smart_contracts/cert/contract.py:42
+    // return arc4.UInt64(asset.id)
+    itob
+    retsub
+
+
+// smart_contracts.cert.contract.Cert.update() -> uint64:
+update:
+    // smart_contracts/cert/contract.py:44-45
+    // @arc4.abimethod(allow_actions=["UpdateApplication"])
+    // def update(self) -> bool:
+    proto 0 1
+    // smart_contracts/cert/contract.py:46
+    // return True
+    int 1
+    retsub
+
+
+// smart_contracts.cert.contract.Cert.delete() -> uint64:
+delete:
+    // smart_contracts/cert/contract.py:48-49
+    // @arc4.abimethod(allow_actions=["DeleteApplication"])
+    // def delete(self) -> bool:
+    proto 0 1
+    // smart_contracts/cert/contract.py:50
+    // return True
+    int 1
+    retsub
